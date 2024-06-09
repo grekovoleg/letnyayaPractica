@@ -31,7 +31,7 @@ char fio[20];
 char vid[20];
 long summa;
 struct sp* sled;
-} *spisok;//шаблон, глобальное описание структуры двустроннего списка 
+} *spisok;//описание структуры двустроннего списка 
 
 struct sp2 {
 char fio[20];
@@ -39,7 +39,7 @@ char vid[20];
 long summa;
 struct sp2* sled;
 struct sp2* pred;
-} *spisok2;//шаблон, глобальное описание структуры двустроннего списка 
+} *spisok2;//описание структуры двустроннего списка 
 
 int menu(int);//указание шаблонов используемых функций 
 void maxim(struct z*, int);
