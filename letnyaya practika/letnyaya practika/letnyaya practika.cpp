@@ -31,32 +31,27 @@ char fio[20];
 char vid[20];
 long summa;
 struct sp* sled;
-} *spisok;//описание структуры двустроннего списка 
+struct sp* pred;
+};//шаблон, глобальное описание структуры двустроннего списка 
 
-struct sp2 {
-char fio[20];
-char vid[20];
-long summa;
-struct sp2* sled;
-struct sp2* pred;
-} *spisok2;//описание структуры двустроннего списка 
 
 int menu(int);//указание шаблонов используемых функций 
 void maxim(struct z*, int);
 void first(struct z*, int);
 void text_data(char *,char *);
 void kolvo(struct z *, int);
-void alfalist(struct z*,int );
-void vstavka(struct z*,char*, int);
+void alfalist(struct z*,int, struct sp**);
+void vstavka(struct z*,char*, int, struct sp**);
 void listing(struct z*, int);
-void diagram(struct z*, int);
+void diagram(struct z*, int, struct sp**);
 void klav(struct z*, int);
 void slozhn(struct z*, int);
-void obrvstavka(char*, int);
+
+
 int main(array<System::String ^> ^args)
 {
 int NC;//количество позиций
-char dan[9][90]={
+char dan[][90]={
 "Кто и сколько потратил больше всего денег в спортзале?          ",
 "Кто и когда из посетителей начал ходить в спортзал раньше всех? ",
 "Количество тарифов, введённых с клавиатуры с массой свыше 80 кг ",
@@ -93,6 +88,8 @@ clients[i].vid, clients[i].summa,
 clients[i].data,
 clients[i].ves);
 getch();
+struct sp* spisok = nullptr;
+
 while(1)//в цикле создаем область для вопросов и окрашиваем её в цвета
 {
 //устанавливаем для букв цвет и подсветку для выбранного вопроса
@@ -113,13 +110,15 @@ printf(" %s ",dan[i]);
 Console::CursorLeft=10;//последняя точка,где будет заканчиваться выделенная область под меню 
 Console::CursorTop=12;
 printf(BlankLine);
+
+
 n=menu(8);//выбор вопроса в меню
 switch(n) {
 case 1: maxim(clients,NC); break;
 case 2: first(clients,NC); break;
 case 3: kolvo(clients,NC); break;
-case 4: alfalist(clients,NC); break;
-case 5: diagram(clients,NC); break;
+case 4: alfalist(clients,NC,&spisok); break;
+case 5: diagram(clients,NC,&spisok); break;
 case 6: klav(clients,NC); break;
 case 7: slozhn(clients,NC); break;
 //case 7: list(clients); break;
@@ -130,8 +129,7 @@ return 0;
 } // конец main()
 int menu(int n)
 {
-int NC;//количество позиций
-char dan[9][90]={
+char dan[][90]={
 "Кто и сколько потратил больше всего денег в спортзале?          ",
 "Кто и когда из посетителей начал ходить в спортзал раньше всех? ",
 "Количество тарифов, введённых с клавиатуры с массой свыше 80 кг ",
@@ -257,10 +255,10 @@ printf("\n\r\t %-20s %ld кг",nt->name, nt-> ves);
 getch();
 }
 
-void alfalist(struct z* client, int NC)//Формирование списка
+void alfalist(struct z* client, int NC, struct sp** spisok)//Формирование списка
 {// Сортировка всех посетителей по алфавитному порядку
 int i,n;
-struct sp2* nt2, *mt;
+struct sp* nt, *mt;
 n=NC;
 Console::ForegroundColor=ConsoleColor::Black;
 Console::BackgroundColor=ConsoleColor::Green;
@@ -269,21 +267,21 @@ printf("\n\t Алфавитный список");
 printf("\t\t\t\tОбратный список");
 printf("\n\t");
 printf("\t\n");
-if(!spisok2)
+if(!spisok)
 for(i=0;i<NC;i++)
-obrvstavka(client[i].name,client[i].summa);
-for(nt2=spisok2; nt2!=0; nt2=nt2->sled)
-printf("\n %-20s %ld",nt2->fio,nt2->summa);
-for(nt2=spisok2, mt=0; nt2!=0; mt=nt2, nt2=nt2->sled);
+vstavka(client,client[i].name, NC, spisok);
+for(nt=*spisok; nt!=0; nt=nt->sled)
+printf("\n %-20s %ld",nt->fio,nt->summa);
+for(nt=*spisok, mt=0; nt!=0; mt=nt, nt=nt->sled);
 Console::CursorTop=4;
-for(nt2=mt,i=0;nt2!=0; i++,nt2=nt2->pred){
+for(nt=mt,i=0;nt!=0; i++,nt=nt->pred){
 Console::CursorLeft=56;
-printf("%-20s %ld",nt2->fio,nt2->summa);
+printf("%-20s %ld",nt->fio,nt->summa);
 Console::CursorTop+=1;
 }
 getch();
 }
-void diagram(struct z *client,int NC)//создаем диаграмму 
+void diagram(struct z *client,int NC, struct sp** spisok)//создаем диаграмму 
 {// Диаграмма, показывающая соотношение потраченных денег в зале между клиентами
 struct sp *nt;//перемеенная для работы со списком 
 int len,i,NColor;//i-для номера строки 
@@ -297,9 +295,9 @@ Console::Clear();
 for(i=0;i<NC;i++) sum = sum+client[i].summa ;
 if(!spisok)
 for(i=0;i<NC;i++)
-vstavka(client,client[i].name, NC);//вставляем из списка названия имен и красим символы в чёрный цвет 
+vstavka(client,client[i].name, NC, spisok);//вставляем из списка названия имен и красим символы в чёрный цвет 
 Color=ConsoleColor::Black; NColor=0;
-for(nt=spisok,i=0; nt!=0; nt=nt->sled,i++)
+for(nt=*spisok,i=0; nt!=0; nt=nt->sled,i++)
 {
 sprintf(str1,"%s",nt->fio);
 sprintf(str2,"%3.1f%%",(nt->summa*100./sum));
@@ -350,39 +348,27 @@ for(i=0;i<NC;i++)
 		printf("\n\t   %s",client[i].name);
 getch();
 }
-void vstavka(struct z* client,char* fio, int NC)
-{//Формирование вставки всех данных
+
+void vstavka(struct z* client,char* fio, int NC, struct sp** spisok)//Вставка в алфавитный список
+{
 int i;
 struct sp *nov,*nt,*z=0;
-for(nt=spisok; nt!=0 && strcmp(nt->fio,fio)<0; z=nt, nt=nt->sled);
+for(nt=*spisok; nt!=0 && strcmp(nt->fio,fio)<0; z=nt, nt=nt->sled);
 if(nt && strcmp(nt->fio,fio)==0) return;
 nov=(struct sp *) malloc(sizeof(struct sp));
 strcpy(nov->fio,fio);
+nov->pred=z;
 nov->sled=nt;
 nov->summa=0;
 for(i=0;i<NC;i++)
 if(strcmp(client[i].name,fio)==0)
 nov->summa+=client[i].summa;
-if(!z) spisok=nov;
-else z->sled=nov;
+if (!z) *spisok=nov;
+if (nt) nt->pred=nov;
+if (z) z->sled=nov;
 return;
 }
 
-void obrvstavka(char* fio, int summa)
-{
-struct sp2 *nov2,*nt2,*z2=0;
-for(nt2=spisok2; nt2!=0 && strcmp(nt2->fio,fio)<0; z2=nt2, nt2=nt2->sled);
-if(nt2 && strcmp(nt2->fio,fio)==0) return;
-nov2=(struct sp2 *) malloc(sizeof(struct sp2));
-strcpy(nov2->fio,fio);
-nov2->summa=summa;
-nov2->pred=z2;
-nov2->sled=nt2;
-if(!z2) spisok2=nov2;
-else z2->sled=nov2;
-if(nt2) nt2->pred=nov2;
-return;
-}
 void slozhn (struct z* client, int NC)
 {//Люди с одинаковым весом и тарифом
 int i,j;
